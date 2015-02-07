@@ -60,7 +60,8 @@ def read_wells(inp_file, plate):
 			line_cells = line.split('\t')
 			for cell in line_cells:
 				temp_id = well_id + letters[row_index]+str(col_index)
-				plate[temp_id] = {}
+				if (temp_id not in plate):
+					plate[temp_id] = {}
 				if ('positive' in cell.lower()):
 					plate[temp_id]['control'] = 'positive'
 				elif ('negative' in cell.lower()):
@@ -73,5 +74,7 @@ def read_wells(inp_file, plate):
 
 plate = {}
 wells_inp = input("What Plate TSV do you want to load? ")
+plate = read_wells(wells_inp, plate)
+wells_inp = input("What Assay TSV do you want to load? ")
 plate = read_wells(wells_inp, plate)
 pprint.pprint (plate)
