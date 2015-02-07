@@ -13,6 +13,7 @@ Well	A1 to H12
 Plate format should customizable				
 '''
 import pprint
+import re
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("target", help="Target of plate")
@@ -30,46 +31,47 @@ if args.subbranch:
 else:
 	well_id = args.target + "_" + args.library + "_" + args.round + "_" + args.branch + "_1_"
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
 def create_wells(cols, rows):
-	x = 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z AA BB CC DD EE FF'
+#	This method is not used in newest iteration
+	x = 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z'
 	letters = x.split()
 	plate = {}
-	for row in range(1,rows+1):
+	for row in range(0,rows):
 		for col in range(1,cols+1):
-			row_letter = letters[row - 1]
+			row_letter = letters[row]
 			temp_id = well_id + row_letter + str(col)
 			plate[temp_id] = {}
 	return plate
 
+def read_wells(inp_file, plate):
+	with open(inp_file, "r") as inp:
+		x = 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z'
+		letters = x.split()
+		row_index = 0
+		for line in inp:
+			col_index = 1
+			line_cells = line.split('\t')
+			for cell in line_cells:
+				temp_id = well_id + letters[row_index]+str(col_index)
+				plate[temp_id] = {}
+				if ('positive' in cell.lower()):
+					plate[temp_id]['control'] = 'positive'
+				elif ('negative' in cell.lower()):
+					plate[temp_id]['control'] = 'negative'
+				elif (is_number(cell)):
+					plate[temp_id]['value'] = float(cell)
+				col_index += 1
+			row_index += 1
+	return plate
 
-plate_size = eval(plate_size)
-if plate_size == 96:
-	plate = create_wells(12, 8)
-elif plate_size == 384:
-	plate = create_wells(12, 32)
-else:
-	print ("Must choose either 96 or 384, defaulting to 96")
-	plate = create_wells(96) 
-
-pos_control = input("Which wells are positive controls (Seperate well numbers with commas)? ")
-pos_control_wells = pos_control.split(',')
-neg_control = input("Which wells are negative controls (Seperate well numbers with commas)? ")
-neg_control_wells = neg_control.split(',')
-for pos_well in pos_control_wells:
-	temp_id = well_id + pos_well.strip().upper()
-	if (temp_id in plate.keys()):
-		plate[temp_id]['control'] = 'positive'
-	else:
-		print (pos_well + " does not exist in plate")
-for neg_well in neg_control_wells:
-	temp_id = well_id + neg_well.strip().upper()
-	if (temp_id in plate.keys()):
-		plate[temp_id]['control'] = 'negative'
-	else:
-		print (neg_well + " does not exist in plate")		
-
+plate = {}
+wells_inp = input("What Plate TSV do you want to load? ")
+plate = read_wells(wells_inp, plate)
 pprint.pprint (plate)
-
-
-
-#with open(".txt", "wt") as out_file:
